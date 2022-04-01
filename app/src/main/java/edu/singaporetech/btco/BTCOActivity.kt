@@ -12,6 +12,7 @@ import java.util.*
 
 class BTCOActivity : AppCompatActivity(), CoroutineScope by MainScope() {
     private lateinit var binding: ActivityLayoutBinding
+
     private external fun chainMethod(difficulty: Int, message: String, blocks: Int): String
     private external fun genesisMethod(difficulty: Int): String
 
@@ -39,16 +40,26 @@ class BTCOActivity : AppCompatActivity(), CoroutineScope by MainScope() {
      *
      */
     private fun handleGenesisClicked() {
-        if (validateButtons(
+        if (validateMethodInputs(
                 difficultyEmpty = true,
                 difficultyOutOfRange = true
             )
         ) {
-            Log.e(TAG, "handleGenesisClicked WORK")
             var difficultyValue = binding.difficultyEditText.text.toString().toInt()
-//            genesisMethod(difficultyValue)
-//            Log.e(TAG, genesisMethod(difficultyValue))
-            binding.dataHashTextView.text = genesisMethod(difficultyValue)
+
+            launch {
+                val start = System.currentTimeMillis()
+
+                var hash: String
+                withContext(Dispatchers.Default) {
+                    hash = genesisMethod(difficultyValue)
+                }
+
+                val time = System.currentTimeMillis() - start
+                binding.dataHashTextView.text = hash
+                binding.logTextView.text = getString(R.string.time_taken_to_mine, time.toString())
+                Log.e(TAG, "genesis ${time}ms $hash")
+            }
         }
     }
 
@@ -57,7 +68,7 @@ class BTCOActivity : AppCompatActivity(), CoroutineScope by MainScope() {
      *
      */
     private fun handleChainClicked() {
-        if (validateButtons(
+        if (validateMethodInputs(
                 difficultyEmpty = true,
                 difficultyOutOfRange = true,
                 blockEmpty = true,
@@ -65,15 +76,23 @@ class BTCOActivity : AppCompatActivity(), CoroutineScope by MainScope() {
                 transactionEmpty = true
             )
         ) {
-            Log.e(
-                TAG,
-                "handleChainClicked WORK ${binding.difficultyEditText.text.toString().toInt()}"
-            )
             var difficultyValue = binding.difficultyEditText.text.toString().toInt()
             var message = binding.msgEditText.text.toString()
             var blocks = binding.blocksEditText.text.toString().toInt()
-//            Log.e(TAG, chainMethod(difficultyValue, message, blocks))
-            binding.dataHashTextView.text = chainMethod(difficultyValue, message, blocks)
+
+            launch {
+                val start = System.currentTimeMillis()
+
+                var hash: String
+                withContext(Dispatchers.Default) {
+                    hash = chainMethod(difficultyValue, message, blocks)
+                }
+
+                val time = System.currentTimeMillis() - start
+                binding.dataHashTextView.text = hash
+                binding.logTextView.text = getString(R.string.time_taken_to_mine, time.toString())
+                Log.e(TAG, "chain ${time}ms $hash")
+            }
         }
     }
 
@@ -87,7 +106,7 @@ class BTCOActivity : AppCompatActivity(), CoroutineScope by MainScope() {
      * @param blockOutOfRange
      * @return
      */
-    private fun validateButtons(
+    private fun validateMethodInputs(
         difficultyEmpty: Boolean = false,
         difficultyOutOfRange: Boolean = false,
         transactionEmpty: Boolean = false,
@@ -136,7 +155,10 @@ class BTCOActivity : AppCompatActivity(), CoroutineScope by MainScope() {
             }
         }
 
-        binding.logTextView.text = errorMsg
+        if (errorMsg.isNotEmpty()) {
+            binding.logTextView.text = errorMsg
+        }
+
         return errorMsg.isEmpty()
     }
 

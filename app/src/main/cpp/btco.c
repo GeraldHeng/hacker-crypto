@@ -20,7 +20,7 @@ Java_edu_singaporetech_btco_BTCOActivity_chainMethod(JNIEnv *env,
                                                      jstring message,
                                                      jint blocks) {
     // Log difficulty and message.
-    __android_log_print(ANDROID_LOG_INFO, TAG, "difficulty=%d message=%s",
+    __android_log_print(ANDROID_LOG_INFO, TAG, "difficulty=%d message=\"%s\"",
                         difficulty,
                         (*env)->GetStringUTFChars(env, message, 0));
 
@@ -39,10 +39,10 @@ Java_edu_singaporetech_btco_BTCOActivity_chainMethod(JNIEnv *env,
     }
 
     // Hash to string.
-    char *hashString;
+    char hashString[HASH_LEN * 2 + 1];
     BlockHeader header = *prevHeader;
-    makeCStringFromBytes(header.dataHash, hashString,
-                         sizeof(header.dataHash) / sizeof(uint8_t));
+
+    makeCStringFromBytes(header.dataHash, hashString, HASH_LEN);
 
     return (*env)->NewStringUTF(env, hashString);
 }
@@ -53,14 +53,12 @@ Java_edu_singaporetech_btco_BTCOActivity_genesisMethod(JNIEnv *env, jobject thiz
                                                        jint difficulty) {
     // Block creation.
     const char data[] = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks";
-    BlockHeader currHeader = addBlockWithPrevPtr(NULL, data, sizeof(data) + 1, difficulty);
+    BlockHeader currHeader = addBlockWithPrevPtr(NULL, data, sizeof(data), difficulty);
     __android_log_print(ANDROID_LOG_INFO, TAG, "Created block with timestamp=%u nonce=%d",
                         currHeader.timestamp, currHeader.nonce);
 
     // Hash conversion to string.
-    char *hashString;
-    makeCStringFromBytes(currHeader.dataHash, hashString,
-                         sizeof(currHeader.dataHash) / sizeof(uint8_t));
-
+    char hashString[HASH_LEN * 2 + 1];
+    makeCStringFromBytes(currHeader.dataHash, hashString, HASH_LEN);
     return (*env)->NewStringUTF(env, hashString);
 }
